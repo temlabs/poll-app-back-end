@@ -1,0 +1,33 @@
+[
+  {
+    "id": 1,
+    "question": "Where should we go for dinner?",
+    "options": ["Prezzo", "Nando's", "Five Guys", "Dominos"],
+    "openTime": "2022-03-23T18:25:43.000Z",
+    "closeTime": "2022-03-23T18:30:43.000Z",
+    "password": "helloWorld"
+  },
+  {
+    "id": 2,
+    "question": "Who will be the best footballer in 5 years?",
+    "options": [
+      "Phil Foden",
+      "Joao Felix",
+      "Mbappe",
+      "Haaland",
+      "Pedri",
+      "Jude Bellingham"
+    ],
+    "openTime": "2022-04-01T09:01:23.000Z",
+    "closeTime": "2022-04-01T09:11:23.000Z",
+    "password": "thisisaPassw0rd"
+  },
+  {
+    "id": 3,
+    "question": "Pineapple on pizza?",
+    "options": ["Yes", "No"],
+    "openTime": "2022-03-23T18:25:43.000Z",
+    "closeTime": "2022-04-23T18:30:43.000Z",
+    "password": "anotherP4ss"
+  }
+]
