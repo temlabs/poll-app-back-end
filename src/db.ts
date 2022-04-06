@@ -1,125 +1,66 @@
-export interface DbItem {
-  // sketch out interface here
+import pollData from "./data/polls.json";
+
+export interface PollNoId {
+  question: string;
+  options: string[];
+  openTime: string;
+  closeTime: string;
+  password: string;
 }
 
-export interface DbItemWithId extends DbItem {
+export interface Poll extends PollNoId {
   id: number;
+  voteUrl: string;
+  masterUrl: string;
 }
 
-const db: DbItemWithId[] = [];
+const polls: Poll[] = pollData;
+const highestId: number = Math.max(...polls.map((x) => x.id));
+let nextAvailableId: number = highestId + 1;
 
-/** Variable to keep incrementing id of database items */
-let idCounter = 0;
-
-/**
- * Adds in some dummy database items to the database
- *
- * @param n - the number of items to generate
- * @returns the created items
- */
-export const addDummyDbItems = (n: number): DbItemWithId[] => {
-  const createdSignatures: DbItemWithId[] = [];
-  for (let count = 0; count < n; count++) {
-    const createdSignature = addDbItem({
-      // possibly add some generated data here
-    });
-    createdSignatures.push(createdSignature);
-  }
-  return createdSignatures;
-};
-
-/**
- * Adds in a single item to the database
- *
- * @param data - the item data to insert in
- * @returns the item added (with a newly created id)
- */
-export const addDbItem = (data: DbItem): DbItemWithId => {
-  const newEntry: DbItemWithId = {
-    id: ++idCounter,
+export const createPoll = (data: PollNoId): Poll => {
+  const newPoll: Poll = {
+    id: nextAvailableId,
+    voteUrl: "https://localhost/" + nextAvailableId,
+    masterUrl: "https://localhost/" + nextAvailableId,
     ...data,
   };
-  db.push(newEntry);
-  return newEntry;
+  polls.push(newPoll);
+  nextAvailableId++;
+  return newPoll;
 };
 
-/**
- * Deletes a database item with the given id
- *
- * @param id - the id of the database item to delete
- * @returns the deleted database item (if originally located),
- *  otherwise the string `"not found"`
- */
-export const deleteDbItemById = (id: number): DbItemWithId | "not found" => {
-  const idxToDeleteAt = findIndexOfDbItemById(id);
-  if (typeof idxToDeleteAt === "number") {
-    const itemToDelete = getDbItemById(id);
-    db.splice(idxToDeleteAt, 1); // .splice can delete from an array
-    return itemToDelete;
+export const deletePollById = (id: number): Poll | null => {
+  const pollToDelete: Poll | undefined = getPollById(id);
+  if (pollToDelete) {
+    const pollIndex = polls.findIndex((p) => p.id === id);
+    polls.splice(pollIndex, 1);
+    console.log(polls);
+    return pollToDelete;
   } else {
-    return "not found";
+    return null;
   }
 };
 
-/**
- * Finds the index of a database item with a given id
- *
- * @param id - the id of the database item to locate the index of
- * @returns the index of the matching database item,
- *  otherwise the string `"not found"`
- */
-const findIndexOfDbItemById = (id: number): number | "not found" => {
-  const matchingIdx = db.findIndex((entry) => entry.id === id);
-  // .findIndex returns -1 if not located
-  if (matchingIdx) {
-    return matchingIdx;
-  } else {
-    return "not found";
-  }
-};
-
-/**
- * Find all database items
- * @returns all database items from the database
- */
-export const getAllDbItems = (): DbItemWithId[] => {
-  return db;
-};
-
-/**
- * Locates a database item by a given id
- *
- * @param id - the id of the database item to locate
- * @returns the located database item (if found),
- *  otherwise the string `"not found"`
- */
-export const getDbItemById = (id: number): DbItemWithId | "not found" => {
-  const maybeEntry = db.find((entry) => entry.id === id);
-  if (maybeEntry) {
-    return maybeEntry;
-  } else {
-    return "not found";
-  }
-};
-
-/**
- * Applies a partial update to a database item for a given id
- *  based on the passed data
- *
- * @param id - the id of the database item to update
- * @param newData - the new data to overwrite
- * @returns the updated database item (if one is located),
- *  otherwise the string `"not found"`
- */
-export const updateDbItemById = (
-  id: number,
-  newData: Partial<DbItem>
-): DbItemWithId | "not found" => {
-  const idxOfEntry = findIndexOfDbItemById(id);
+export const updatePoll = (id: number, newData: Partial<Poll>): Poll | null => {
+  const indexOfPoll: number = polls.findIndex((p) => p.id === id);
   // type guard against "not found"
-  if (typeof idxOfEntry === "number") {
-    return Object.assign(db[idxOfEntry], newData);
+  if (indexOfPoll >= 0) {
+    return Object.assign(polls[indexOfPoll], newData);
   } else {
-    return "not found";
+    return null;
   }
+};
+
+export const getAllPolls = (): Poll[] => {
+  return polls;
+};
+
+export const getPollById = (id: number): Poll | undefined => {
+  const pollIndex: number = polls.findIndex((x) => x.id === id);
+  return pollIndex === -1 ? undefined : polls[pollIndex];
+};
+
+export const getPollByIndex = (index: number): Poll => {
+  return polls[index];
 };
