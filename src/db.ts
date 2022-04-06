@@ -10,6 +10,8 @@ export interface PollNoId {
 
 export interface Poll extends PollNoId {
   id: number;
+  voteUrl: string;
+  masterUrl: string;
 }
 
 const polls: Poll[] = pollData;
@@ -19,6 +21,8 @@ let nextAvailableId: number = highestId + 1;
 export const createPoll = (data: PollNoId): Poll => {
   const newPoll: Poll = {
     id: nextAvailableId,
+    voteUrl: "https://localhost/" + nextAvailableId,
+    masterUrl: "https://localhost/" + nextAvailableId,
     ...data,
   };
   polls.push(newPoll);

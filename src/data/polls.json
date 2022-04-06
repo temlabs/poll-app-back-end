@@ -5,7 +5,9 @@
     "options": ["Prezzo", "Nando's", "Five Guys", "Dominos"],
     "openTime": "2022-03-23T18:25:43.000Z",
     "closeTime": "2022-03-23T18:30:43.000Z",
-    "password": "helloWorld"
+    "password": "helloWorld",
+    "voteUrl": "",
+    "masterUrl": ""
   },
   {
     "id": 2,
@@ -20,7 +22,9 @@
     ],
     "openTime": "2022-04-01T09:01:23.000Z",
     "closeTime": "2022-04-01T09:11:23.000Z",
-    "password": "thisisaPassw0rd"
+    "password": "thisisaPassw0rd",
+    "voteUrl": "",
+    "masterUrl": ""
   },
   {
     "id": 3,
@@ -28,6 +32,8 @@
     "options": ["Yes", "No"],
     "openTime": "2022-03-23T18:25:43.000Z",
     "closeTime": "2022-04-23T18:30:43.000Z",
-    "password": "anotherP4ss"
+    "password": "anotherP4ss",
+    "voteUrl": "",
+    "masterUrl": ""
   }
 ]
