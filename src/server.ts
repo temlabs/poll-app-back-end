@@ -31,10 +31,10 @@ export const baseUrl =
     ? `localhost:${PORT_NUMBER.toString()}`
     : "https://poll-app-back-end.herokuapp.com/";
 
-export const baseUrlFrontEnd = process.env.NODE_ENV === "development" 
-    ? "localhost:3000" 
+export const baseUrlFrontEnd =
+  process.env.NODE_ENV === "development"
+    ? "localhost:3000"
     : "https://p-poll.netlify.app/";
-
 
 // API info page
 app.get("/", (req, res) => {
