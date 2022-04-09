@@ -26,11 +26,15 @@ dotenv.config();
 
 // use the environment variable PORT, or 4000 as a fallback
 const PORT_NUMBER = process.env.PORT ?? 4000;
-export const rootUrl =
-  process.env.NODE_ENV === "production"
-    ? "https://poll-app-back-end.herokuapp.com/"
-    : `localhost:${PORT_NUMBER.toString()}`;
-export const frontEndUrlRoot = "localhost:3000";
+export const baseUrl =
+  process.env.NODE_ENV === "development"
+    ? `localhost:${PORT_NUMBER.toString()}`
+    : "https://poll-app-back-end.herokuapp.com/";
+
+export const baseUrlFrontEnd = process.env.NODE_ENV === "development" 
+    ? "localhost:3000" 
+    : "https://p-poll.netlify.app/";
+
 
 // API info page
 app.get("/", (req, res) => {
