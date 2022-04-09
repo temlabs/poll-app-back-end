@@ -1,5 +1,5 @@
 import pollData from "./data/polls.json";
-import {frontEndUrlRoot} from './server';
+import { frontEndUrlRoot } from "./server";
 
 export interface OptionData {
   name: string;

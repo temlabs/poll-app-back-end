@@ -7,7 +7,7 @@ import {
   getAllPolls,
   getPollById,
   Poll,
-  updatePoll
+  updatePoll,
 } from "./db";
 import filePath from "./filePath";
 
@@ -26,8 +26,11 @@ dotenv.config();
 
 // use the environment variable PORT, or 4000 as a fallback
 const PORT_NUMBER = process.env.PORT ?? 4000;
-export const rootUrl = process.env.NODE_ENV === 'production'? 'https://poll-app-back-end.herokuapp.com/' :`localhost:${PORT_NUMBER.toString()}`;
-export const frontEndUrlRoot = 'localhost:3000'
+export const rootUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://poll-app-back-end.herokuapp.com/"
+    : `localhost:${PORT_NUMBER.toString()}`;
+export const frontEndUrlRoot = "localhost:3000";
 
 // API info page
 app.get("/", (req, res) => {
@@ -73,7 +76,10 @@ app.delete<{ id: string }>("/polls/:id", (req, res) => {
 
 // PATCH /items/:id
 app.patch<{ id: string }, {}, Partial<Poll>>("/polls/:id", (req, res) => {
-  const matchingSignature: Poll | null = updatePoll(parseInt(req.params.id), req.body);
+  const matchingSignature: Poll | null = updatePoll(
+    parseInt(req.params.id),
+    req.body
+  );
   if (matchingSignature === null) {
     res.status(404).json("Not found");
   } else {

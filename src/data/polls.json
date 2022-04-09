@@ -2,7 +2,12 @@
   {
     "id": 1,
     "question": "Where should we go for dinner?",
-    "options": [{"name":"Prezzo","count":0}, {"name":"Nando's","count":0}, {"name":"Five Guys","count":0}, {"name":"Dominos","count":0}],
+    "options": [
+      { "name": "Prezzo", "count": 0 },
+      { "name": "Nando's", "count": 0 },
+      { "name": "Five Guys", "count": 0 },
+      { "name": "Dominos", "count": 0 }
+    ],
     "openTime": "2022-03-23T18:25:43.000Z",
     "closeTime": "2022-03-23T18:30:43.000Z",
     "password": "helloWorld",
@@ -13,12 +18,12 @@
     "id": 2,
     "question": "Who will be the best footballer in 5 years?",
     "options": [
-      {"name":"Phil Foden","count":0},
-      {"name":"Joao Felix","count":0},
-      {"name":"Mbappe","count":0},
-      {"name":"Haaland","count":0},
-      {"name":"Pedri","count":0},
-      {"name":"Jude Bellingham","count":0}
+      { "name": "Phil Foden", "count": 0 },
+      { "name": "Joao Felix", "count": 0 },
+      { "name": "Mbappe", "count": 0 },
+      { "name": "Haaland", "count": 0 },
+      { "name": "Pedri", "count": 0 },
+      { "name": "Jude Bellingham", "count": 0 }
     ],
     "openTime": "2022-04-01T09:01:23.000Z",
     "closeTime": "2022-04-01T09:11:23.000Z",
@@ -29,7 +34,10 @@
   {
     "id": 3,
     "question": "Pineapple on pizza?",
-    "options": [{"name":"Yes","count":0}, {"name":"No","count":0}],
+    "options": [
+      { "name": "Yes", "count": 0 },
+      { "name": "No", "count": 0 }
+    ],
     "openTime": "2022-03-23T18:25:43.000Z",
     "closeTime": "2022-04-23T18:30:43.000Z",
     "password": "anotherP4ss",
