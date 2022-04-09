@@ -1,8 +1,14 @@
 import pollData from "./data/polls.json";
+import {frontEndUrlRoot} from './server';
+
+export interface OptionData {
+  name: string;
+  count: number;
+}
 
 export interface PollNoId {
   question: string;
-  options: string[];
+  options: OptionData[];
   openTime: string;
   closeTime: string;
   password: string;
@@ -21,8 +27,8 @@ let nextAvailableId: number = highestId + 1;
 export const createPoll = (data: PollNoId): Poll => {
   const newPoll: Poll = {
     id: nextAvailableId,
-    voteUrl: "https://localhost/" + nextAvailableId,
-    masterUrl: "https://localhost/" + nextAvailableId,
+    voteUrl: `${frontEndUrlRoot}#/polls/${nextAvailableId}`,
+    masterUrl: `${frontEndUrlRoot}#/polls/${nextAvailableId}`,
     ...data,
   };
   polls.push(newPoll);
