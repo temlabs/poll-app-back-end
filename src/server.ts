@@ -96,9 +96,11 @@ app.patch<{ id: string }, {}, VoteRequestObject>(
     console.log("registered");
     const pollId = req.params.id;
     const client = await pool.connect();
-    voteInPoll(pollId, req.body.voteModifications[0], client).then(() =>
-      voteInPoll(pollId, req.body.voteModifications[1], client)
-    );
+    voteInPoll(pollId, req.body.voteModifications[0], client).then(() => {
+      if (req.body.voteModifications.length > 1) {
+        voteInPoll(pollId, req.body.voteModifications[1], client);
+      }
+    });
     res.status(200);
     client.release();
   }
