@@ -14,7 +14,7 @@ export interface PollNoId {
 export interface PollWithId extends PollNoId {
   id: string;
   voteUrl: string;
-  masterUrl: string;
+  masterUrl?: string;
 }
 
 export interface VoteRequest {

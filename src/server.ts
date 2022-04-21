@@ -49,7 +49,7 @@ app.get("/", (req, res) => {
 });
 
 // GET all polls
-app.get("/polls", async (req, res) => {
+app.get("/polls/", async (req, res) => {
   const client = await pool.connect();
   const result = await client.query("select * from polls");
   res.status(200).json(result.rows);
@@ -93,15 +93,16 @@ app.get<{ id: string }>("/polls/:id", async (req, res) => {
 app.patch<{ id: string }, {}, VoteRequestObject>(
   "/polls/:id",
   async (req, res) => {
-    console.log("registered");
     const pollId = req.params.id;
     const client = await pool.connect();
-    voteInPoll(pollId, req.body.voteModifications[0], client).then(() => {
-      if (req.body.voteModifications.length > 1) {
-        voteInPoll(pollId, req.body.voteModifications[1], client);
-      }
-    });
-    res.status(200);
+    voteInPoll(pollId, req.body.voteModifications[0], client)
+      .then(() => {
+        if (req.body.voteModifications.length > 1) {
+          voteInPoll(pollId, req.body.voteModifications[1], client);
+        }
+      })
+      .then(() => res.status(200).json());
+
     client.release();
   }
 );

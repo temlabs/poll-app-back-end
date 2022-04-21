@@ -1,14 +1,15 @@
 import { PoolClient, QueryResult } from "pg";
 import { OptionData, PollNoId, PollWithId, VoteRequest } from "./interfaces";
 import { baseUrlFrontEnd } from "./server";
+import { v4 as uuidv4 } from "uuid";
 
 export async function postPollToDatabase(
   pollToAdd: PollNoId,
   client: PoolClient
 ): Promise<PollWithId> {
   // add poll to polls table
-  const pollId: string = self.crypto.randomUUID();
-  const masterKey: string = self.crypto.randomUUID();
+  const pollId: string = uuidv4();
+  const masterKey: string = uuidv4();
   const {
     question,
     openTime,
@@ -35,7 +36,7 @@ export async function postPollToDatabase(
   await client.query(insertOptionsQuery);
 
   // assume everything goes well. package our complete object to return to client
-  const voteUrl = `${baseUrlFrontEnd}/polls/#/${pollId}`;
+  const voteUrl = `${baseUrlFrontEnd}/polls/#${pollId}`;
   const masterUrl = `${baseUrlFrontEnd}/polls/master/${masterKey}`;
 
   const createdPoll: PollWithId = Object.assign(pollToAdd, {
@@ -49,8 +50,8 @@ export async function postPollToDatabase(
 export async function getPollFromDatabaseById(
   pollId: string,
   client: PoolClient
-): Promise<PollNoId | string> {
-  const selectPollQuery = `select distinct options.pollid, polls.question, option, votes from polls,options where options.pollid=$1 and polls.pollid=$1`;
+): Promise<PollWithId | string> {
+  const selectPollQuery = `select distinct options.pollid, polls.question, option, votes, options.optionnumber, polls.masterkey from polls,options where options.pollid=$1 and polls.pollid=$1`;
   const selectPollResult: QueryResult | string = await client
     .query(selectPollQuery, [pollId])
     .catch((e: Error) => e.message);
@@ -63,25 +64,29 @@ export async function getPollFromDatabaseById(
   if (selectPollResult.rows.length === 0) {
     return "A poll with this id could not be found";
   }
-
   const optionsArray: OptionData[] = selectPollResult.rows.map((row) => {
     const option: OptionData = {
       option: row["option"],
       votes: parseInt(row["votes"]),
-      optionNumber: parseInt(row["optionNumber"]),
+      optionNumber: parseInt(row["optionnumber"]),
     };
     return option;
   });
 
   const question: string = selectPollResult.rows[0]["question"];
-  const openTime: string = selectPollResult.rows[0]["openTime"];
-  const closeTime: string = selectPollResult.rows[0]["closeTime"];
+  const openTime: string = selectPollResult.rows[0]["opentime"];
+  const closeTime: string = selectPollResult.rows[0]["closetime"];
+  const voteUrl = `${baseUrlFrontEnd}/polls/#${pollId}`;
+  //const masterUrl = `${baseUrlFrontEnd}/polls/master/${selectPollResult.rows[0]["masterkey"]}`;
 
-  const retrievedPoll: PollNoId = {
+  const retrievedPoll: PollWithId = {
     question: question,
     options: optionsArray,
     openTime: openTime,
     closeTime: closeTime,
+    id: pollId,
+    voteUrl: voteUrl,
+    masterUrl: "no access",
   };
 
   return retrievedPoll;
@@ -95,12 +100,10 @@ export async function voteInPoll(
   const { changeVoteBy, optionNumber, option } = VoteRequest;
   const updateOptionsParameters = [changeVoteBy, pollId, optionNumber, option];
   const updateOptionsQuery = `update options set votes = votes + $1 where pollId = $2 and optionnumber = $3 and option=$4`;
-  console.log(updateOptionsQuery);
   const updateOptionsResult: QueryResult | string = await client
     .query(updateOptionsQuery, updateOptionsParameters)
     .catch((e: Error) => e.message);
   if (typeof updateOptionsResult === "string") {
-    console.log(updateOptionsResult);
     return updateOptionsResult;
   }
 }
