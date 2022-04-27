@@ -26,7 +26,7 @@ export async function postPollToDatabase(
 
   // add options to options table
   const insertOptionRows = pollToAdd.options.map((currentOption, index) => {
-    const optionRows:string = `(${index}, '${pollId}', '${currentOption.option}', 0)`;
+    const optionRows = `(${index}, '${pollId}', '${currentOption.option}', 0)`;
     return optionRows;
   });
 
@@ -67,7 +67,7 @@ export async function getPollFromDatabaseById(
     return "A poll with this id could not be found";
   }
   const optionsArray: OptionData[] = selectPollResult.rows.map((row) => {
-    const votes = masterKey === row["masterkey"]? parseInt(row["votes"]): 0;
+    const votes = masterKey === row["masterkey"] ? parseInt(row["votes"]) : 0;
     const option: OptionData = {
       option: row["option"],
       votes: votes,
