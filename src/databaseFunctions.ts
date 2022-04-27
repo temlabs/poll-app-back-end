@@ -26,7 +26,7 @@ export async function postPollToDatabase(
 
   // add options to options table
   const insertOptionRows = pollToAdd.options.map((currentOption, index) => {
-    const optionRows = `(${index}, '${pollId}', '${currentOption.option}', 0)`;
+    const optionRows:string = `(${index}, '${pollId}', '${currentOption.option}', 0)`;
     return optionRows;
   });
 
@@ -36,8 +36,8 @@ export async function postPollToDatabase(
   await client.query(insertOptionsQuery);
 
   // assume everything goes well. package our complete object to return to client
-  //const voteUrl = `${baseUrlFrontEnd}/polls/#${pollId}`;
-  const voteUrl = `${baseUrlFrontEnd}/polls/#${pollId}`;
+  //const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
+  const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
   const masterUrl = `${baseUrlFrontEnd}/polls/master/${masterKey}`;
 
   const createdPoll: PollWithId = Object.assign(pollToAdd, {
@@ -50,6 +50,7 @@ export async function postPollToDatabase(
 
 export async function getPollFromDatabaseById(
   pollId: string,
+  masterKey: string,
   client: PoolClient
 ): Promise<PollWithId | string> {
   const selectPollQuery = `select distinct options.pollid, polls.question, option, votes, options.optionnumber, polls.masterkey from polls,options where options.pollid=$1 and polls.pollid=$1`;
@@ -66,9 +67,10 @@ export async function getPollFromDatabaseById(
     return "A poll with this id could not be found";
   }
   const optionsArray: OptionData[] = selectPollResult.rows.map((row) => {
+    const votes = masterKey === row["masterkey"]? parseInt(row["votes"]): 0;
     const option: OptionData = {
       option: row["option"],
-      votes: parseInt(row["votes"]),
+      votes: votes,
       optionNumber: parseInt(row["optionnumber"]),
     };
     return option;
@@ -77,7 +79,7 @@ export async function getPollFromDatabaseById(
   const question: string = selectPollResult.rows[0]["question"];
   const openTime: string = selectPollResult.rows[0]["opentime"];
   const closeTime: string = selectPollResult.rows[0]["closetime"];
-  const voteUrl = `${baseUrlFrontEnd}/polls/#${pollId}`;
+  const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
   //const masterUrl = `${baseUrlFrontEnd}/polls/master/${selectPollResult.rows[0]["masterkey"]}`;
 
   const retrievedPoll: PollWithId = {
@@ -89,7 +91,7 @@ export async function getPollFromDatabaseById(
     voteUrl: voteUrl,
     masterUrl: "no access",
   };
-
+  console.log(retrievedPoll);
   return retrievedPoll;
 }
 

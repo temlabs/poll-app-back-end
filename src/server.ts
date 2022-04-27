@@ -67,10 +67,11 @@ app.post<{}, {}, PollNoId>("/poll", async (req, res) => {
 });
 
 // GET poll by Id
-app.get<{ id: string }>("/polls/:id", async (req, res) => {
-  const pollId: string = req.params.id;
+app.get<{ pollId: string, masterKey: string }>("/polls/:pollId/:masterKey", async (req, res) => {
+  const pollId: string = req.params.pollId;
+  const masterKey: string = req.params.masterKey;
   const client = await pool.connect();
-  await getPollFromDatabaseById(pollId, client).then((retrievedPoll) =>
+  await getPollFromDatabaseById(pollId, masterKey, client).then((retrievedPoll) =>
     typeof retrievedPoll === "string"
       ? res.status(404).json(retrievedPoll)
       : res.status(200).json(retrievedPoll)
