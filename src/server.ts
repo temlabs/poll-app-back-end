@@ -40,7 +40,7 @@ export const baseUrl =
 export const baseUrlFrontEnd =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : "https://p-poll.netlify.app/";
+    : "https://p-poll.netlify.app";
 
 // API info page
 app.get("/", (req, res) => {

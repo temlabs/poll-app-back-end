@@ -36,6 +36,7 @@ export async function postPollToDatabase(
   await client.query(insertOptionsQuery);
 
   // assume everything goes well. package our complete object to return to client
+  //const voteUrl = `${baseUrlFrontEnd}/polls/#${pollId}`;
   const voteUrl = `${baseUrlFrontEnd}/polls/#${pollId}`;
   const masterUrl = `${baseUrlFrontEnd}/polls/master/${masterKey}`;
 
