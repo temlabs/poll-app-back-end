@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import {Server} from 'socket.io'
+import { Server } from "socket.io";
 
 import {
   postPollToDatabase,
@@ -14,10 +14,8 @@ import { Pool } from "pg";
 import { PollNoId, VoteRequestObject } from "./interfaces";
 import { serialize } from "v8";
 const app = express();
-const http = require('http');
+const http = require("http");
 const server = http.createServer(app);
-
-
 
 console.log(dotenv.config()); // why does database connection only work if I include this console log?
 // also how to end pool gracefully?
@@ -49,15 +47,12 @@ export const baseUrlFrontEnd =
     ? "http://localhost:3000"
     : "https://p-poll.netlify.app";
 
-
-  const io = new Server(server,{
-    cors: {
-      origin: '*',
-      methods: ["GET", "POST"]
-    }
-  });
-
-
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 // API info page
 app.get("/", (req, res) => {
@@ -123,39 +118,36 @@ app.patch<{ id: string }, {}, VoteRequestObject>(
           voteInPoll(pollId, req.body.voteModifications[1], client);
         }
       })
-      .then(() => res.status(200).json({"result":"the vote was updated"})).catch(e => console.log(e));
+      .then(() => res.status(200).json({ result: "the vote was updated" }))
+      .catch((e) => console.log(e));
 
     client.release();
   }
 );
 
-
-io.on('connection', async (socket) => {
+io.on("connection", async (socket) => {
   // console.log('a user connected');
   // console.log(`Master key is: ${socket.handshake.query.masterKey}`)
   const masterKey = socket.handshake.query.masterKey as string;
   const client = await pool.connect();
-  const dbRes = await client.query('SELECT pollid from polls WHERE masterkey = $1',[masterKey]);
-  const pollId = dbRes.rows[0]["pollid"] as string;  
+  const dbRes = await client.query(
+    "SELECT pollid from polls WHERE masterkey = $1",
+    [masterKey]
+  );
+  const pollId = dbRes.rows[0]["pollid"] as string;
   pool.connect((err, client, done) => {
-    const listenQuery = `LISTEN n${pollId.replace(/-/g,'_')}`;
+    const listenQuery = `LISTEN n${pollId.replace(/-/g, "_")}`;
     client.query(listenQuery);
-    client.on('notification', (msg) =>{
-      getPollFromDatabaseById(pollId,masterKey,client).then((res) => {
-        socket.emit("message",res);
-      });
-      
-      socket.on('disconnect', () => {
+    client.on("notification", (msg) => {
+      getPollFromDatabaseById(pollId, masterKey, client).then((res) => {
+        socket.emit("message", res);
       });
 
-    })
-  });  
-
+      socket.on("disconnect", () => {});
+    });
+  });
 });
-
-
 
 server.listen(PORT_NUMBER, () => {
   console.log(`Server is listening on port ${PORT_NUMBER}!`);
-
 });
