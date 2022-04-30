@@ -38,7 +38,7 @@ export async function postPollToDatabase(
   // assume everything goes well. package our complete object to return to client
   //const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
   const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
-  const masterUrl = `${baseUrlFrontEnd}/polls/master/${masterKey}`;
+  const masterUrl = `${baseUrlFrontEnd}/master/${pollId}/${masterKey}`;
 
   const createdPoll: PollWithId = Object.assign(pollToAdd, {
     id: pollId,
@@ -80,7 +80,7 @@ export async function getPollFromDatabaseById(
   const openTime: string = selectPollResult.rows[0]["opentime"];
   const closeTime: string = selectPollResult.rows[0]["closetime"];
   const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
-  //const masterUrl = `${baseUrlFrontEnd}/polls/master/${selectPollResult.rows[0]["masterkey"]}`;
+  //const masterUrl = `${baseUrlFrontEnd}/master/${selectPollResult.rows[0]["masterkey"]}`;
 
   const retrievedPoll: PollWithId = {
     question: question,
@@ -91,7 +91,7 @@ export async function getPollFromDatabaseById(
     voteUrl: voteUrl,
     masterUrl: "no access",
   };
-  console.log(retrievedPoll);
+  //console.log(retrievedPoll);
   return retrievedPoll;
 }
 
@@ -102,11 +102,7 @@ export async function voteInPoll(
 ): Promise<void | string> {
   const { changeVoteBy, optionNumber, option } = VoteRequest;
   const updateOptionsParameters = [changeVoteBy, pollId, optionNumber, option];
-  const updateOptionsQuery = `update options set votes = votes + $1 where pollId = $2 and optionnumber = $3 and option=$4`;
-  const updateOptionsResult: QueryResult | string = await client
-    .query(updateOptionsQuery, updateOptionsParameters)
-    .catch((e: Error) => e.message);
-  if (typeof updateOptionsResult === "string") {
-    return updateOptionsResult;
-  }
+  const updateOptionsQuery = `update options set votes = votes + $1 where pollid = $2 and optionnumber = $3 and option=$4 returning *`;
+  //  const updateOptionsResult: QueryResult | string =
+  await client.query(updateOptionsQuery, updateOptionsParameters);
 }

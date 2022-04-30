@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { Server } from "socket.io";
 
 import {
   postPollToDatabase,
@@ -12,6 +13,9 @@ import filePath from "./filePath";
 import { Pool } from "pg";
 import { PollNoId, VoteRequestObject } from "./interfaces";
 const app = express();
+//const http = require("http");
+import http from "http";
+const server = http.createServer(app);
 
 console.log(dotenv.config()); // why does database connection only work if I include this console log?
 // also how to end pool gracefully?
@@ -29,6 +33,7 @@ const pool = new Pool(dbConfig);
 
 app.use(express.json());
 app.use(cors());
+//app.options('*',cors());
 dotenv.config();
 
 const PORT_NUMBER = process.env.PORT ?? 4000;
@@ -41,6 +46,13 @@ export const baseUrlFrontEnd =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
     : "https://p-poll.netlify.app";
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 // API info page
 app.get("/", (req, res) => {
@@ -106,14 +118,40 @@ app.patch<{ id: string }, {}, VoteRequestObject>(
           voteInPoll(pollId, req.body.voteModifications[1], client);
         }
       })
-      .then(() => res.status(200).json());
+      .then(() => res.status(200).json({ result: "the vote was updated" }))
+      .catch((e) => console.log(e));
 
     client.release();
   }
 );
 
-app.listen(PORT_NUMBER, () => {
-  console.log(`Server is listening on port ${PORT_NUMBER}!`);
+io.on("connection", async (socket) => {
+  // console.log('a user connected');
+  // console.log(`Master key is: ${socket.handshake.query.masterKey}`)
+  const masterKey = socket.handshake.query.masterKey as string;
+  const client = await pool.connect();
+  const dbRes = await client.query(
+    "SELECT pollid from polls WHERE masterkey = $1",
+    [masterKey]
+  );
+  const pollId = dbRes.rows[0]["pollid"] as string;
+  pool.connect((err, client, release) => {
+    if (err) {
+      return console.error("Error acquiring client", err.stack);
+    }
+    const listenQuery = `LISTEN n${pollId.replace(/-/g, "_")}`;
+    client.query(listenQuery);
+    client.on("notification", () => {
+      getPollFromDatabaseById(pollId, masterKey, client).then((res) => {
+        socket.emit("message", res);
+      });
+    });
+    socket.on("disconnect", () => {
+      release();
+    });
+  });
 });
 
-console.log("bye bye");
+server.listen(PORT_NUMBER, () => {
+  console.log(`Server is listening on port ${PORT_NUMBER}!`);
+});
