@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import {Server} from 'socket.io'
 
 import {
   postPollToDatabase,
@@ -12,6 +13,10 @@ import filePath from "./filePath";
 import { Pool } from "pg";
 import { PollNoId, VoteRequestObject } from "./interfaces";
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+
+
 
 console.log(dotenv.config()); // why does database connection only work if I include this console log?
 // also how to end pool gracefully?
@@ -41,6 +46,16 @@ export const baseUrlFrontEnd =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
     : "https://p-poll.netlify.app";
+
+
+  const io = new Server(server,{
+    cors: {
+      origin: baseUrlFrontEnd,
+      methods: ["GET", "POST"]
+    }
+  });
+
+
 
 // API info page
 app.get("/", (req, res) => {
@@ -112,8 +127,17 @@ app.patch<{ id: string }, {}, VoteRequestObject>(
   }
 );
 
-app.listen(PORT_NUMBER, () => {
-  console.log(`Server is listening on port ${PORT_NUMBER}!`);
+
+io.on('connection', async (socket) => {
+  //console.log('a user connected');
+  const client = await pool.connect();
+  const result = await client.query("select * from polls");
+  socket.emit("message",(result.rows));
+  client.release();  
+  
 });
 
-console.log("bye bye");
+
+server.listen(PORT_NUMBER, () => {
+  console.log(`Server is listening on port ${PORT_NUMBER}!`);
+});
