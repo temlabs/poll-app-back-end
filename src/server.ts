@@ -137,8 +137,8 @@ io.on("connection", async (socket) => {
   const pollId = dbRes.rows[0]["pollid"] as string;
   pool.connect((err, client, release) => {
     if (err) {
-      return console.error('Error acquiring client', err.stack);
-    }  
+      return console.error("Error acquiring client", err.stack);
+    }
     const listenQuery = `LISTEN n${pollId.replace(/-/g, "_")}`;
     client.query(listenQuery);
     client.on("notification", () => {
@@ -146,7 +146,7 @@ io.on("connection", async (socket) => {
         socket.emit("message", res);
       });
     });
-    socket.on("disconnect", ()=>{
+    socket.on("disconnect", () => {
       release();
     });
   });
