@@ -12,6 +12,7 @@ import {
 import filePath from "./filePath";
 import { Pool } from "pg";
 import { PollNoId, VoteRequestObject } from "./interfaces";
+import { serialize } from "v8";
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
@@ -34,6 +35,7 @@ const pool = new Pool(dbConfig);
 
 app.use(express.json());
 app.use(cors());
+//app.options('*',cors());
 dotenv.config();
 
 const PORT_NUMBER = process.env.PORT ?? 4000;
@@ -50,7 +52,7 @@ export const baseUrlFrontEnd =
 
   const io = new Server(server,{
     cors: {
-      origin: baseUrlFrontEnd,
+      origin: '*',
       methods: ["GET", "POST"]
     }
   });
@@ -121,7 +123,7 @@ app.patch<{ id: string }, {}, VoteRequestObject>(
           voteInPoll(pollId, req.body.voteModifications[1], client);
         }
       })
-      .then(() => res.status(200).json());
+      .then(() => res.status(200).json({"result":"the vote was updated"})).catch(e => console.log(e));
 
     client.release();
   }
@@ -129,15 +131,31 @@ app.patch<{ id: string }, {}, VoteRequestObject>(
 
 
 io.on('connection', async (socket) => {
-  //console.log('a user connected');
+  // console.log('a user connected');
+  // console.log(`Master key is: ${socket.handshake.query.masterKey}`)
+  const masterKey = socket.handshake.query.masterKey as string;
   const client = await pool.connect();
-  const result = await client.query("select * from polls");
-  socket.emit("message",(result.rows));
-  client.release();  
-  
+  const dbRes = await client.query('SELECT pollid from polls WHERE masterkey = $1',[masterKey]);
+  const pollId = dbRes.rows[0]["pollid"] as string;  
+  pool.connect((err, client, done) => {
+    const listenQuery = `LISTEN n${pollId.replace(/-/g,'_')}`;
+    client.query(listenQuery);
+    client.on('notification', (msg) =>{
+      getPollFromDatabaseById(pollId,masterKey,client).then((res) => {
+        socket.emit("message",res);
+      });
+      
+      socket.on('disconnect', () => {
+      });
+
+    })
+  });  
+
 });
+
 
 
 server.listen(PORT_NUMBER, () => {
   console.log(`Server is listening on port ${PORT_NUMBER}!`);
+
 });
