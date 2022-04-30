@@ -103,7 +103,8 @@ export async function voteInPoll(
   const { changeVoteBy, optionNumber, option } = VoteRequest;
   const updateOptionsParameters = [changeVoteBy, pollId, optionNumber, option];
   const updateOptionsQuery = `update options set votes = votes + $1 where pollid = $2 and optionnumber = $3 and option=$4 returning *`;
-  const updateOptionsResult: QueryResult | string = await client.query(
+  //  const updateOptionsResult: QueryResult | string = 
+  await client.query(
     updateOptionsQuery,
     updateOptionsParameters
   );

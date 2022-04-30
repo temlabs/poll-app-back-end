@@ -12,9 +12,9 @@ import {
 import filePath from "./filePath";
 import { Pool } from "pg";
 import { PollNoId, VoteRequestObject } from "./interfaces";
-import { serialize } from "v8";
 const app = express();
-const http = require("http");
+//const http = require("http");
+import http from "http";
 const server = http.createServer(app);
 
 console.log(dotenv.config()); // why does database connection only work if I include this console log?
@@ -135,15 +135,19 @@ io.on("connection", async (socket) => {
     [masterKey]
   );
   const pollId = dbRes.rows[0]["pollid"] as string;
-  pool.connect((err, client, done) => {
+  pool.connect((err, client, release) => {
+    if (err) {
+      return console.error('Error acquiring client', err.stack);
+    }  
     const listenQuery = `LISTEN n${pollId.replace(/-/g, "_")}`;
     client.query(listenQuery);
-    client.on("notification", (msg) => {
+    client.on("notification", () => {
       getPollFromDatabaseById(pollId, masterKey, client).then((res) => {
         socket.emit("message", res);
       });
-
-      socket.on("disconnect", () => {});
+    });
+    socket.on("disconnect", ()=>{
+      release();
     });
   });
 });
