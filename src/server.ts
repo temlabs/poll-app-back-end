@@ -92,8 +92,10 @@ app.get<{ pollId: string; masterKey: string }>(
         typeof retrievedPoll === "string"
           ? res.status(404).json(retrievedPoll)
           : res.status(200).json(retrievedPoll)
-    ).catch((e) =>
+    ).catch((e) => {
+      console.log(`found an error: ${e.message}`)
       res.status(500).json(e)
+    }
     ).finally(() => client.release())
 
   }
