@@ -96,6 +96,7 @@ app.get<{ pollId: string; masterKey: string }>(
     } catch (error) {
       if (error instanceof Error) {
         res.status(500).json(error.message)
+        throw Error(error.message)
       } else {
         res.status(500).json(String(`There was an eror: ${error} Please try again in 5 minutes. `))
         throw Error(String(error))
