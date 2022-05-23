@@ -92,9 +92,9 @@ app.get<{ pollId: string; masterKey: string }>(
         typeof retrievedPoll === "string"
           ? res.status(404).json(retrievedPoll)
           : res.status(200).json(retrievedPoll)
-    ).finally(() => client.release()).catch((e) =>
+    ).catch((e) =>
       res.status(500).json(e)
-    )
+    ).finally(() => client.release())
 
   }
 );
