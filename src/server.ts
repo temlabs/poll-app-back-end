@@ -15,6 +15,7 @@ import { PollNoId, VoteRequestObject } from "./interfaces";
 const app = express();
 //const http = require("http");
 import http from "http";
+import { release } from "os";
 const server = http.createServer(app);
 
 console.log(dotenv.config()); // why does database connection only work if I include this console log?
@@ -87,12 +88,20 @@ app.get<{ pollId: string; masterKey: string }>(
     const pollId: string = req.params.pollId;
     const masterKey: string = req.params.masterKey;
     const client = await pool.connect();
-    getPollFromDatabaseById(pollId, masterKey, client).then(
-      (retrievedPoll) =>
-        typeof retrievedPoll === "string"
-          ? res.status(404).json(retrievedPoll)
-          : res.status(200).json(retrievedPoll)
-    ).finally(() => client.release())
+    pool.connect((err, client, release) => {
+
+      if (err) {
+        res.sendStatus(503)
+      }
+
+      getPollFromDatabaseById(pollId, masterKey, client).then(
+        (retrievedPoll) =>
+          typeof retrievedPoll === "string"
+            ? res.status(404).json(retrievedPoll)
+            : res.status(200).json(retrievedPoll)
+      ).finally(() => release())
+    })
+
 
   }
 );
