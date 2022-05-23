@@ -10,7 +10,7 @@ import {
 } from "./databaseFunctions";
 
 import filePath from "./filePath";
-import { Pool } from "pg";
+import { Client, Pool } from "pg";
 import { PollNoId, VoteRequestObject } from "./interfaces";
 const app = express();
 //const http = require("http");
@@ -27,6 +27,8 @@ const sslSetting = process.env.LOCAL ? false : herokuSSLSetting;
 const dbConfig = {
   connectionString: process.env.DATABASE_URL,
   ssl: sslSetting,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000
 };
 
 const pool = new Pool(dbConfig);
@@ -80,18 +82,18 @@ app.post<{}, {}, PollNoId>("/poll", async (req, res) => {
 
 // GET poll by Id
 app.get<{ pollId: string; masterKey: string }>(
-  "/polls/:pollId/:masterKey",
+  "/polls/:pollId/:masterKey?", cors(),
   async (req, res) => {
     const pollId: string = req.params.pollId;
     const masterKey: string = req.params.masterKey;
     const client = await pool.connect();
-    await getPollFromDatabaseById(pollId, masterKey, client).then(
+    getPollFromDatabaseById(pollId, masterKey, client).then(
       (retrievedPoll) =>
         typeof retrievedPoll === "string"
           ? res.status(404).json(retrievedPoll)
           : res.status(200).json(retrievedPoll)
-    );
-    client.release();
+    ).finally(() => client.release())
+
   }
 );
 
