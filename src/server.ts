@@ -86,18 +86,16 @@ app.get<{ pollId: string; masterKey: string }>(
   async (req, res) => {
     const pollId: string = req.params.pollId;
     const masterKey: string = req.params.masterKey;
-    const client = await pool.connect();
-    getPollFromDatabaseById(pollId, masterKey, client).then(
-      (retrievedPoll) =>
-        typeof retrievedPoll === "string"
-          ? res.status(404).json(retrievedPoll)
-          : res.status(200).json(retrievedPoll)
-    ).catch((e) => {
-      console.log(`found an error: ${e.message}`)
-      res.status(500).json(e)
-    }
-    ).finally(() => client.release())
 
+    try {
+      const client = await pool.connect();
+      const retrievedPoll = await getPollFromDatabaseById(pollId, masterKey, client)
+      typeof retrievedPoll === "string"
+        ? res.status(404).json(retrievedPoll)
+        : res.status(200).json(retrievedPoll)
+    } catch (error) {
+      res.status(500).json(error)
+    }
   }
 );
 
