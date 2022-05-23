@@ -94,7 +94,11 @@ app.get<{ pollId: string; masterKey: string }>(
         ? res.status(404).json(retrievedPoll)
         : res.status(200).json(retrievedPoll)
     } catch (error) {
-      res.status(500).json(error)
+      if (error instanceof Error) {
+        res.status(500).json(error.message)
+      } else {
+        res.status(500).json(String(error))
+      }
     }
   }
 );
