@@ -10,7 +10,7 @@ import {
 } from "./databaseFunctions";
 
 import filePath from "./filePath";
-import { Client, Pool } from "pg";
+import { Client, Pool, PoolClient } from "pg";
 import { PollNoId, VoteRequestObject } from "./interfaces";
 const app = express();
 //const http = require("http");
@@ -86,22 +86,23 @@ app.get<{ pollId: string; masterKey: string }>(
   async (req, res) => {
     const pollId: string = req.params.pollId;
     const masterKey: string = req.params.masterKey;
-
+    let client: PoolClient | undefined;
     try {
-      const client = await pool.connect();
+      client = await pool.connect();
       const retrievedPoll = await getPollFromDatabaseById(pollId, masterKey, client)
       typeof retrievedPoll === "string"
         ? res.status(404).json(retrievedPoll)
         : res.status(200).json(retrievedPoll)
     } catch (error) {
       if (error instanceof Error) {
-        res.status(500).json(error.message)
+        res.status(500).json(`There was an eror: ${error.message} Please try again in 5 minutes. `)
         throw Error(error.message)
       } else {
         res.status(500).json(String(`There was an eror: ${error} Please try again in 5 minutes. `))
         throw Error(String(error))
-
       }
+    } finally {
+      client?.release()
     }
   }
 );
