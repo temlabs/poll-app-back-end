@@ -14,7 +14,7 @@ export async function postPollToDatabase(
     question,
     openTime,
     closeTime,
-  }: { question: string; openTime: string; closeTime?: string } = pollToAdd;
+  } = pollToAdd;
   const insertPollQuery = "INSERT INTO polls values($1, $2, $3, $4, $5)";
   await client.query(insertPollQuery, [
     pollId,
@@ -25,10 +25,10 @@ export async function postPollToDatabase(
   ]);
 
   // add options to options table
-  const insertOptionRows = pollToAdd.options.map((currentOption, index) => {
-    const optionRows = `(${index}, '${pollId}', '${currentOption.option}', 0)`;
-    return optionRows;
-  });
+  const insertOptionRows = pollToAdd.options.map(
+    (currentOption, index) => `(${index}, '${pollId}', '${currentOption.option}', 0)`
+  ); // vulnerability: check SQL injection
+
 
   const insertOptionsQuery = `INSERT INTO options VALUES ${insertOptionRows.join(
     ","
