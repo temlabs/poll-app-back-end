@@ -7,10 +7,11 @@ import {
   postPollToDatabase,
   getPollFromDatabaseById,
   voteInPoll,
+  closePoll,
 } from "./databaseFunctions";
 
 import filePath from "./filePath";
-import { Client, Pool, PoolClient } from "pg";
+import { Pool, PoolClient } from "pg";
 import { PollNoId, VoteRequestObject } from "./interfaces";
 const app = express();
 //const http = require("http");
@@ -28,7 +29,7 @@ const dbConfig = {
   connectionString: process.env.DATABASE_URL,
   ssl: sslSetting,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
+  connectionTimeoutMillis: 2000,
 };
 
 const pool = new Pool(dbConfig);
@@ -82,27 +83,60 @@ app.post<{}, {}, PollNoId>("/poll", async (req, res) => {
 
 // GET poll by Id
 app.get<{ pollId: string; masterKey: string }>(
-  "/polls/:pollId/:masterKey?", cors(),
+  "/polls/:pollId/:masterKey?",
+  cors(),
   async (req, res) => {
     const pollId: string = req.params.pollId;
     const masterKey: string = req.params.masterKey;
     let client: PoolClient | undefined;
     try {
       client = await pool.connect();
-      const retrievedPoll = await getPollFromDatabaseById(pollId, masterKey, client)
+      const retrievedPoll = await getPollFromDatabaseById(
+        pollId,
+        masterKey,
+        client
+      );
       typeof retrievedPoll === "string"
         ? res.status(404).json(retrievedPoll)
-        : res.status(200).json(retrievedPoll)
+        : res.status(200).json(retrievedPoll);
     } catch (error) {
       if (error instanceof Error) {
-        res.status(500).json(`There was an eror: ${error.message} Please try again in 5 minutes. `)
-        throw Error(error.message)
+        res
+          .status(500)
+          .json(
+            `There was an eror: ${error.message} Please try again in 5 minutes. `
+          );
+        throw Error(error.message);
       } else {
-        res.status(500).json(String(`There was an eror: ${error} Please try again in 5 minutes. `))
-        throw Error(String(error))
+        res
+          .status(500)
+          .json(
+            String(
+              `There was an eror: ${error} Please try again in 5 minutes. `
+            )
+          );
+        throw Error(String(error));
       }
     } finally {
-      client?.release()
+      client?.release();
+    }
+  }
+);
+
+// CLOSE POLL
+app.patch<{ pollId: string }, {}, {}>(
+  "/polls/close/:pollId",
+  async (req, res) => {
+    const { pollId } = req.params;
+    let client: PoolClient | undefined;
+    try {
+      client = await pool.connect();
+      await closePoll(pollId, client);
+      res.sendStatus(200);
+    } catch (error) {
+      res.sendStatus(500);
+    } finally {
+      client?.release();
     }
   }
 );

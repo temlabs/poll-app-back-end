@@ -10,11 +10,7 @@ export async function postPollToDatabase(
   // add poll to polls table
   const pollId: string = uuidv4();
   const masterKey: string = uuidv4();
-  const {
-    question,
-    openTime,
-    closeTime,
-  }: { question: string; openTime: string; closeTime?: string } = pollToAdd;
+  const { question, openTime, closeTime } = pollToAdd;
   const insertPollQuery = "INSERT INTO polls values($1, $2, $3, $4, $5)";
   await client.query(insertPollQuery, [
     pollId,
@@ -25,10 +21,10 @@ export async function postPollToDatabase(
   ]);
 
   // add options to options table
-  const insertOptionRows = pollToAdd.options.map((currentOption, index) => {
-    const optionRows = `(${index}, '${pollId}', '${currentOption.option}', 0)`;
-    return optionRows;
-  });
+  const insertOptionRows = pollToAdd.options.map(
+    (currentOption, index) =>
+      `(${index}, '${pollId}', '${currentOption.option}', 0)`
+  ); // vulnerability: check SQL injection
 
   const insertOptionsQuery = `INSERT INTO options VALUES ${insertOptionRows.join(
     ","
@@ -50,10 +46,10 @@ export async function postPollToDatabase(
 
 export async function getPollFromDatabaseById(
   pollId: string,
-  masterKey: string,
+  masterKey: string | undefined,
   client: PoolClient
 ): Promise<PollWithId | string> {
-  const selectPollQuery = `select distinct options.pollid, polls.question, option, votes, options.optionnumber, polls.masterkey from polls,options where options.pollid=$1 and polls.pollid=$1`;
+  const selectPollQuery = `select distinct options.pollid, polls.question, option, votes, options.optionnumber, polls.masterkey, polls.opentime, polls.closetime from polls,options where options.pollid=$1 and polls.pollid=$1`;
   const selectPollResult: QueryResult | string = await client
     .query(selectPollQuery, [pollId])
     .catch((e: Error) => e.message);
@@ -66,8 +62,19 @@ export async function getPollFromDatabaseById(
   if (selectPollResult.rows.length === 0) {
     return "A poll with this id could not be found";
   }
+
+  const question: string = selectPollResult.rows[0]["question"];
+  const openTime: string = selectPollResult.rows[0]["opentime"];
+  const closeTime: string = selectPollResult.rows[0]["closetime"];
+  const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
+  const pollIsClosed =
+    closeTime !== null && new Date(closeTime) > new Date(openTime);
+
   const optionsArray: OptionData[] = selectPollResult.rows.map((row) => {
-    const votes = masterKey === row["masterkey"] ? parseInt(row["votes"]) : 0;
+    const votes =
+      masterKey === row["masterkey"] || pollIsClosed
+        ? parseInt(row["votes"])
+        : 0;
     const option: OptionData = {
       option: row["option"],
       votes: votes,
@@ -75,12 +82,6 @@ export async function getPollFromDatabaseById(
     };
     return option;
   });
-
-  const question: string = selectPollResult.rows[0]["question"];
-  const openTime: string = selectPollResult.rows[0]["opentime"];
-  const closeTime: string = selectPollResult.rows[0]["closetime"];
-  const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
-  //const masterUrl = `${baseUrlFrontEnd}/master/${selectPollResult.rows[0]["masterkey"]}`;
 
   const retrievedPoll: PollWithId = {
     question: question,
@@ -91,7 +92,8 @@ export async function getPollFromDatabaseById(
     voteUrl: voteUrl,
     masterUrl: "no access",
   };
-  //console.log(retrievedPoll);
+
+  //console.log(retrievedPoll)
   return retrievedPoll;
 }
 
@@ -100,9 +102,27 @@ export async function voteInPoll(
   VoteRequest: VoteRequest,
   client: PoolClient
 ): Promise<void | string> {
-  const { changeVoteBy, optionNumber, option } = VoteRequest;
-  const updateOptionsParameters = [changeVoteBy, pollId, optionNumber, option];
-  const updateOptionsQuery = `update options set votes = votes + $1 where pollid = $2 and optionnumber = $3 and option=$4 returning *`;
+  const { changeVoteBy, optionNumber } = VoteRequest;
+  const updateOptionsParameters = [changeVoteBy, pollId, optionNumber];
+  const updateOptionsQuery = `WITH owpd AS (
+    SELECT option, options.pollid, optionnumber, closetime, opentime FROM options
+      LEFT JOIN polls
+      ON options.pollid = polls.pollid
+    )
+    UPDATE options
+    SET votes = options.votes + $1
+    FROM owpd
+    WHERE options.pollid= $2 and owpd.pollid = $2 and options.optionnumber = $3 and (owpd.closetime is null or NOW() < owpd.closetime)
+    returning *;`;
   //  const updateOptionsResult: QueryResult | string =
   await client.query(updateOptionsQuery, updateOptionsParameters);
+}
+
+export async function closePoll(
+  pollId: string,
+  client: PoolClient
+): Promise<void> {
+  const closePollParameters = [pollId];
+  const closePollQuery = "UPDATE polls SET closetime = NOW() WHERE pollid = $1";
+  await client.query(closePollQuery, closePollParameters);
 }
