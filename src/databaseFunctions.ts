@@ -50,10 +50,10 @@ export async function postPollToDatabase(
 
 export async function getPollFromDatabaseById(
   pollId: string,
-  masterKey: string,
+  masterKey: string | undefined,
   client: PoolClient
 ): Promise<PollWithId | string> {
-  const selectPollQuery = `select distinct options.pollid, polls.question, option, votes, options.optionnumber, polls.masterkey from polls,options where options.pollid=$1 and polls.pollid=$1`;
+  const selectPollQuery = `select distinct options.pollid, polls.question, option, votes, options.optionnumber, polls.masterkey, polls.opentime, polls.closetime from polls,options where options.pollid=$1 and polls.pollid=$1`;
   const selectPollResult: QueryResult | string = await client
     .query(selectPollQuery, [pollId])
     .catch((e: Error) => e.message);
@@ -66,8 +66,17 @@ export async function getPollFromDatabaseById(
   if (selectPollResult.rows.length === 0) {
     return "A poll with this id could not be found";
   }
+
+
+  const question: string = selectPollResult.rows[0]["question"];
+  const openTime: string = selectPollResult.rows[0]["opentime"];
+  const closeTime: string = selectPollResult.rows[0]["closetime"];
+  const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
+  const pollIsClosed = closeTime !== null && new Date(closeTime) > new Date(openTime)
+  console.log(`poll close? ${pollIsClosed}`)
+
   const optionsArray: OptionData[] = selectPollResult.rows.map((row) => {
-    const votes = masterKey === row["masterkey"] ? parseInt(row["votes"]) : 0;
+    const votes = masterKey === row["masterkey"] || pollIsClosed ? parseInt(row["votes"]) : 0;
     const option: OptionData = {
       option: row["option"],
       votes: votes,
@@ -76,11 +85,7 @@ export async function getPollFromDatabaseById(
     return option;
   });
 
-  const question: string = selectPollResult.rows[0]["question"];
-  const openTime: string = selectPollResult.rows[0]["opentime"];
-  const closeTime: string = selectPollResult.rows[0]["closetime"];
-  const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
-  //const masterUrl = `${baseUrlFrontEnd}/master/${selectPollResult.rows[0]["masterkey"]}`;
+
 
   const retrievedPoll: PollWithId = {
     question: question,
@@ -91,7 +96,8 @@ export async function getPollFromDatabaseById(
     voteUrl: voteUrl,
     masterUrl: "no access",
   };
-  //console.log(retrievedPoll);
+
+  //console.log(retrievedPoll)
   return retrievedPoll;
 }
 
@@ -105,4 +111,11 @@ export async function voteInPoll(
   const updateOptionsQuery = `update options set votes = votes + $1 where pollid = $2 and optionnumber = $3 and option=$4 returning *`;
   //  const updateOptionsResult: QueryResult | string =
   await client.query(updateOptionsQuery, updateOptionsParameters);
+}
+
+
+export async function closePoll(pollId: string, client: PoolClient): Promise<void> {
+  const closePollParameters = [pollId]
+  const closePollQuery = 'UPDATE polls SET closetime = NOW() WHERE pollid = $1'
+  await client.query(closePollQuery, closePollParameters);
 }

@@ -7,6 +7,7 @@ import {
   postPollToDatabase,
   getPollFromDatabaseById,
   voteInPoll,
+  closePoll,
 } from "./databaseFunctions";
 
 import filePath from "./filePath";
@@ -106,6 +107,21 @@ app.get<{ pollId: string; masterKey: string }>(
     }
   }
 );
+
+// CLOSE POLL
+app.post<{ pollId: string }, {}, {}>("/polls/close/:pollId", async (req, res) => {
+  const { pollId } = req.params;
+  let client: PoolClient | undefined;
+  try {
+    client = await pool.connect();
+    await closePoll(pollId, client)
+    res.sendStatus(201)
+  } catch (error) {
+    res.sendStatus(500)
+  } finally {
+    client?.release();
+  }
+});
 
 // DELETE poll - not currently used
 // app.delete<{ id: string }>("/polls/:id", (req, res) => {
