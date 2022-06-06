@@ -124,7 +124,7 @@ app.get<{ pollId: string; masterKey: string }>(
 );
 
 // CLOSE POLL
-app.post<{ pollId: string }, {}, {}>(
+app.patch<{ pollId: string }, {}, {}>(
   "/polls/close/:pollId",
   async (req, res) => {
     const { pollId } = req.params;
@@ -132,7 +132,7 @@ app.post<{ pollId: string }, {}, {}>(
     try {
       client = await pool.connect();
       await closePoll(pollId, client);
-      res.sendStatus(201);
+      res.sendStatus(200);
     } catch (error) {
       res.sendStatus(500);
     } finally {
