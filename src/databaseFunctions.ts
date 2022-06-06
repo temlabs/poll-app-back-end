@@ -108,7 +108,16 @@ export async function voteInPoll(
 ): Promise<void | string> {
   const { changeVoteBy, optionNumber, option } = VoteRequest;
   const updateOptionsParameters = [changeVoteBy, pollId, optionNumber, option];
-  const updateOptionsQuery = `update options set votes = votes + $1 where pollid = $2 and optionnumber = $3 and option=$4 returning *`;
+  const updateOptionsQuery = `WITH owpd AS (
+    SELECT option, options.pollid, optionnumber, closetime, opentime FROM options
+      LEFT JOIN polls
+      ON options.pollid = polls.pollid
+    )
+    UPDATE options
+    SET votes = options.votes + $1
+    FROM owpd
+    WHERE options.pollid= $2 and owpd.pollid = $2 and options.optionnumber = $3 and (owpd.closetime is null or NOW() < owpd.closetime)
+    returning *;`;
   //  const updateOptionsResult: QueryResult | string =
   await client.query(updateOptionsQuery, updateOptionsParameters);
 }
