@@ -69,7 +69,6 @@ export async function getPollFromDatabaseById(
   const voteUrl = `${baseUrlFrontEnd}/polls/${pollId}`;
   const pollIsClosed =
     closeTime !== null && new Date(closeTime) > new Date(openTime);
-  console.log(`poll close? ${pollIsClosed}`);
 
   const optionsArray: OptionData[] = selectPollResult.rows.map((row) => {
     const votes =
@@ -103,8 +102,8 @@ export async function voteInPoll(
   VoteRequest: VoteRequest,
   client: PoolClient
 ): Promise<void | string> {
-  const { changeVoteBy, optionNumber, option } = VoteRequest;
-  const updateOptionsParameters = [changeVoteBy, pollId, optionNumber, option];
+  const { changeVoteBy, optionNumber } = VoteRequest;
+  const updateOptionsParameters = [changeVoteBy, pollId, optionNumber];
   const updateOptionsQuery = `WITH owpd AS (
     SELECT option, options.pollid, optionnumber, closetime, opentime FROM options
       LEFT JOIN polls
